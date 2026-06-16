@@ -2,7 +2,7 @@ const CACHE_NAME = 'habit-tracker-v1';
 
 const FILES = [
   './',
-  './tracker.html',
+  './index.html',
   './manifest.json'
 ];
 
