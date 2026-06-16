@@ -1,0 +1,685 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#7c6ff7">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Трекер привычек">
+
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Трекер изменений — 8 недель</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c6ff7;
+    --accent2: #c084fc;
+    --green: #4ade80;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(60px, env(safe-area-inset-bottom));
+}
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-top: 8px;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.7;
+  }
+
+  h1 {
+    font-size: clamp(24px, 6vw, 42px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+  /* Global progress */
+  .global-progress {
+    max-width: 640px;
+    margin: 0 auto 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+  }
+
+  .global-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .global-progress-label span:last-child {
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .bar-track {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+  }
+
+  /* Week selector */
+  .week-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .week-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .week-btn:hover { border-color: var(--accent); color: var(--text); }
+  .week-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .week-btn.complete { border-color: var(--green); color: var(--green); }
+  .week-btn.active.complete { background: var(--green); border-color: var(--green); color: #000; }
+
+  /* Day selector */
+  .day-nav {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 20px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .day-btn {
+    flex: 1;
+    max-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 4px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .day-btn:hover { border-color: var(--accent); }
+
+  .day-btn.active {
+    border-color: var(--accent);
+    background: #1a1535;
+  }
+
+  .day-btn.complete { border-color: var(--green); background: #0f1f0f; }
+  .day-btn.active.complete { border-color: var(--green); background: #142114; }
+
+  .day-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+
+  .day-btn.active .day-name { color: var(--accent); }
+  .day-btn.complete .day-name { color: var(--green); }
+
+  .day-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+
+  .day-btn.complete .day-dot { background: var(--green); }
+  .day-btn.active .day-dot { background: var(--accent); }
+
+  .day-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  /* Main view */
+  .week-view { max-width: 640px; margin: 0 auto; }
+
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .week-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .week-phase {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 9px;
+  }
+
+  .day-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .day-progress-row .bar-track { flex: 1; }
+
+  .day-pct-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    min-width: 34px;
+    text-align: right;
+  }
+
+  .week-quote {
+    background: linear-gradient(135deg, #1a1230 0%, #120d24 100%);
+    border: 1px solid #2d2050;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--accent2);
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* Category */
+  .category {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .category:hover { border-color: #3a3a4a; }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cat-icon {
+    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .cat-info { flex: 1; }
+
+  .cat-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+
+  .cat-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .cat-toggle { color: var(--muted); font-size: 16px; transition: transform 0.2s; }
+  .category.open .cat-toggle { transform: rotate(180deg); }
+
+  .category-body {
+    display: none;
+    padding: 0 18px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .category.open .category-body { display: block; }
+
+  /* Task items */
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #1e1e2a;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .task-item:last-child { border-bottom: none; }
+  .task-item:hover { opacity: 0.85; }
+
+  .task-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+
+  .task-item.done .task-check { background: var(--green); border-color: var(--green); }
+
+  .task-check::after {
+    content: '✓';
+    font-size: 13px;
+    color: #000;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .task-item.done .task-check::after { opacity: 1; }
+
+  .task-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+
+  .task-item.done .task-text { color: var(--muted); text-decoration: line-through; }
+
+  /* Nav buttons */
+  .nav-btns {
+    display: flex;
+    gap: 10px;
+    max-width: 640px;
+    margin: 20px auto 0;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { border-color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nav-btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Трекер привычек</div>
+  <h1>8 недель изменений</h1>
+  <p class="subtitle">Отмечай задачи каждый день</p>
+</header>
+
+<div class="global-progress">
+  <div class="global-progress-label">
+    <span>Общий прогресс</span>
+    <span id="globalPct">0%</span>
+  </div>
+  <div class="bar-track"><div class="bar-fill" id="globalBar" style="width:0%"></div></div>
+</div>
+
+<div class="week-nav" id="weekNav"></div>
+<div class="day-nav" id="dayNav"></div>
+<div class="week-view" id="weekView"></div>
+
+<div class="nav-btns">
+  <button class="nav-btn" id="prevBtn" onclick="changeDay(-1)">← Вчера</button>
+  <button class="nav-btn primary" id="nextBtn" onclick="changeDay(1)">Завтра →</button>
+</div>
+
+<script>
+const DAYS = ['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
+
+const WEEKS = [
+  {
+    phase: "ФАЗА 1 — ЗАПУСК",
+    quote: "Не жди мотивации. Начни — и она придёт сама.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка (3 раза в неделю — отмечай каждую)","Выпить 2 литра воды","Не есть фастфуд и сахар","Умылся утром и вечером (борьба с прыщами)","Поменял наволочку (раз в 3–4 дня)","Лёг спать до 24:00"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Встал в одно и то же время","Написал 3 главных дела на сегодня","Телефон убрал с рабочего места во время работы","Вечером подвёл итог дня (1 минута)"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Не курил / заменил перекур прогулкой","Не пил алкоголь","Не смотрел порно (удалил/заблокировал)","При позыве — сделал 20 отжиманий или холодный душ"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Сделал одно дискомфортное действие","Записал одну победу дня (даже маленькую)","Не оправдывался вслух ни разу"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Первым написал или заговорил с кем-то","Слушал больше, чем говорил"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["Не открывал ТикТок весь день","Если открыл — закрыл через 1 минуту и записал триггер","Прочитал минимум 10 страниц книги","Книга была рядом с кроватью (а не телефон)"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 1 — ЗАКРЕПЛЕНИЕ",
+    quote: "7 дней позади. Тяжело? Значит ты растёшь.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка (увеличь нагрузку на 10%)","Белок в каждом приёме пищи","Выпить 2 литра воды","Умылся утром и вечером","Не трогал лицо руками","Лёг спать до 24:00"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Встал в одно и то же время","Выполнил все 3 главных дела","Не открывал соцсети первые 30 минут после подъёма","Вечерний разбор дня"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Не курил","Не пил алкоголь","Не смотрел порно","Вычислил свой главный триггер и записал его"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Одно дискомфортное действие","Записал победу дня","Не зависел от чьей-то реакции ни разу"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Инициировал общение","Проявил интерес к чужой жизни (спросил, запомнил)"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["Не открывал ТикТок","Удалил приложение или поставил лимит экранного времени","Прочитал 10+ страниц","Вместо скроллинга — книга или прогулка"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 2 — РАЗГОН",
+    quote: "2 недели — ты уже не тот, что был. Продолжай.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка по плану","Контроль калорий / порций","Выпить 2 литра воды","Умылся + уход за кожей","Прогулка на улице (минимум 20 минут)"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Ранний подъём","Без телефона первые 30 минут","Глубокий фокус-блок (1 час без отвлечений)","Список на завтра написан вечером"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Не курил","Не пил алкоголь","Без порно","Заменил вечернюю тягу на другое занятие"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Дискомфортное действие","Победа дня","Задал себе вопрос: «что бы я сделал увереннее себя?» — и сделал это"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Встретился или созвонился с кем-то вживую","Проявил заботу или внимание"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["Чист — ТикТок не открывал","Прочитал 15+ страниц","Запомнил одну мысль из книги и записал её"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 2 — СЕРЕДИНА",
+    quote: "Месяц. Привычки формируются. Не останавливайся.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка","Белок 1.5–2 г на кг","Вода 2 л","Кожа: умывание + не трогать","Оценил изменения в зеркале (запиши)"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Ранний подъём без отмазок","Два фокус-блока за день","Не прокрастинировал на задаче дольше 5 минут","Вечерний разбор"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Не курил","Не пил","Без порно","Сказал окружению что бросил (если ещё не говорил)"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Дискомфортное действие","Записал 3 вещи за которые горжусь собой","Поймал мысль о чужом мнении — отпустил"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Живое общение","Был собой, не пытался понравиться","Сделал что-то для другого человека"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["ТикТок — ноль","Прочитал 15+ страниц","Скоро закончишь книгу? Выбери следующую"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 3 — НОВЫЙ УРОВЕНЬ",
+    quote: "Ты уже другой человек. Докажи это себе ещё раз.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка с повышенной нагрузкой","Питание под цель (без читов)","Вода","Уход за кожей","Сфотографировал прогресс"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Подъём без будильника второй раз","Три фокус-блока","Сделал самое неприятное дело первым","Вечер без экранов"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Чист по всем фронтам","Триггер возник — пережил без срыва","Заменил старый ритуал новым"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Дискомфортное действие (сложнее чем раньше)","Победа дня","Не оправдывался и не объяснял свои решения"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Инициировал что-то новое (встреча, тема, активность)","Кто-то заметил изменения в тебе?"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["Месяц без ТикТока — как себя чувствуешь?","Прочитал 20+ страниц","Поделился мыслью из книги с кем-то"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 3 — УГЛУБЛЕНИЕ",
+    quote: "6 недель. Большинство сдались бы на 2-й. Ты нет.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка","Питание без компромиссов","Вода","Кожа: ощутил улучшения?","Добавил новый элемент (растяжка, бег, плавание)"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Идеальное утро по своему протоколу","Завершил всё запланированное","Помог кому-то без потери своего времени"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Чист","Триггеры больше не управляют тобой","Зависимость стала выбором — и ты выбрал нет"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Дискомфортное действие","Оценил: кем был 6 недель назад и кем стал","Сказал что думаешь — прямо и без агрессии"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Был интересен в разговоре — не пытался нравиться","Установил или укрепил одну настоящую связь"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["ТикТок — ноль","Прочитал 20+ страниц","Чтение стало привычкой? Отметь это"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 4 — ФИНИШНЫЙ РЫВОК",
+    quote: "Последние 2 недели. Именно здесь закрепляется всё.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Тренировка — лучшая за всё время","Питание идеально","Вода","Кожа заметно лучше?","Сравни фото до и после"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Утренний ритуал без сбоев","Продуктивный день","Вечерний разбор с гордостью"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Не курил","Не пил","Без порно","Старые привычки больше не тянут"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Большое дискомфортное действие","Список из 5 изменений в себе за 7 недель","Не думал о чужом мнении — просто жил"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Провёл время с людьми которые тебя заряжают","Был собой на 100%"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["ТикТок не нужен — ты уже не скучаешь","Прочитал 20+ страниц","Сколько книг прочитал за 7 недель? Запиши"] }
+    ]
+  },
+  {
+    phase: "ФАЗА 4 — ФИНАЛ",
+    quote: "8 недель. Ты сделал это. Теперь это — ты.",
+    categories: [
+      { icon: "💪", name: "Тело и физическая форма", tasks: ["Финальная тренировка","Питание по протоколу","Вода","Кожа: результат виден","Финальное фото — сравни с первым днём"] },
+      { icon: "⚡", name: "Дисциплина и режим", tasks: ["Лучшее утро за 8 недель","Закрыл все важные задачи недели","Написал план на следующий месяц"] },
+      { icon: "🚫", name: "Вредные привычки", tasks: ["Чист по всем пунктам","Осознал: это больше не сила воли — это кто ты есть","Поблагодарил себя за 8 недель"] },
+      { icon: "🧠", name: "Мышление и уверенность", tasks: ["Написал письмо себе прошлому","Оцени уверенность: 1–10 сейчас vs. было","Поставил следующую большую цель"] },
+      { icon: "👥", name: "Отношения и социальность", tasks: ["Кто в твоей жизни стал ближе за эти 8 недель?","Позаботился о ком-то важном для тебя","Ты стал тем, кого хочется любить — отметь это"] },
+      { icon: "📵", name: "Без ТикТока / Чтение", tasks: ["8 недель без ТикТока — ты свободен от него","Дочитал книгу или прочитал финальные страницы","Сколько страниц прочитал за 8 недель? Это твой новый ты"] }
+    ]
+  }
+];
+
+// State: key = "w{week}_d{day}_c{cat}_t{task}" => bool
+let state = {};
+try { state = JSON.parse(localStorage.getItem('tracker_v2') || '{}'); } catch(e) {}
+
+let currentWeek = 0;
+let currentDay = 0; // 0=ПН ... 6=ВС
+
+function saveState() {
+  localStorage.setItem('tracker_v2', JSON.stringify(state));
+}
+
+function getKey(w, d, c, t) { return `w${w}_d${d}_c${c}_t${t}`; }
+
+function dayProgress(w, d) {
+  const week = WEEKS[w];
+  let total = 0, done = 0;
+  week.categories.forEach((cat, ci) => {
+    cat.tasks.forEach((_, ti) => {
+      total++;
+      if (state[getKey(w, d, ci, ti)]) done++;
+    });
+  });
+  return total === 0 ? 0 : Math.round((done / total) * 100);
+}
+
+function weekProgress(w) {
+  let total = 0, done = 0;
+  for (let d = 0; d < 7; d++) {
+    WEEKS[w].categories.forEach((cat, ci) => {
+      cat.tasks.forEach((_, ti) => {
+        total++;
+        if (state[getKey(w, d, ci, ti)]) done++;
+      });
+    });
+  }
+  return total === 0 ? 0 : Math.round((done / total) * 100);
+}
+
+function globalProgress() {
+  let total = 0, done = 0;
+  WEEKS.forEach((_, wi) => {
+    for (let d = 0; d < 7; d++) {
+      WEEKS[wi].categories.forEach((cat, ci) => {
+        cat.tasks.forEach((_, ti) => {
+          total++;
+          if (state[getKey(wi, d, ci, ti)]) done++;
+        });
+      });
+    }
+  });
+  return total === 0 ? 0 : Math.round((done / total) * 100);
+}
+
+function toggleTask(w, d, c, t) {
+  const key = getKey(w, d, c, t);
+  state[key] = !state[key];
+  saveState();
+  render();
+}
+
+function toggleCategory(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function changeDay(dir) {
+  let newDay = currentDay + dir;
+  if (newDay < 0) {
+    if (currentWeek > 0) { currentWeek--; newDay = 6; }
+    else { newDay = 0; }
+  } else if (newDay > 6) {
+    if (currentWeek < 7) { currentWeek++; newDay = 0; }
+    else { newDay = 6; }
+  }
+  currentDay = newDay;
+  render();
+}
+
+function render() {
+  // Global bar
+  const gp = globalProgress();
+  document.getElementById('globalPct').textContent = gp + '%';
+  document.getElementById('globalBar').style.width = gp + '%';
+
+  // Week nav
+  document.getElementById('weekNav').innerHTML = WEEKS.map((_, i) => {
+    const wp = weekProgress(i);
+    const active = i === currentWeek ? 'active' : '';
+    const complete = wp === 100 ? 'complete' : '';
+    return `<button class="week-btn ${active} ${complete}" onclick="currentWeek=${i};currentDay=0;render()">Нед ${i+1}</button>`;
+  }).join('');
+
+  // Day nav
+  document.getElementById('dayNav').innerHTML = DAYS.map((name, d) => {
+    const dp = dayProgress(currentWeek, d);
+    const active = d === currentDay ? 'active' : '';
+    const complete = dp === 100 ? 'complete' : '';
+    const pct = dp > 0 ? dp + '%' : '';
+    return `<div class="day-btn ${active} ${complete}" onclick="currentDay=${d};render()">
+      <div class="day-name">${name}</div>
+      <div class="day-dot"></div>
+      <div class="day-pct">${pct}</div>
+    </div>`;
+  }).join('');
+
+  // Week view
+  const week = WEEKS[currentWeek];
+  const dp = dayProgress(currentWeek, currentDay);
+  const dayName = DAYS[currentDay];
+
+  let html = `
+    <div class="week-header">
+      <div class="week-title">НЕДЕЛЯ ${currentWeek + 1} · ${dayName}</div>
+      <div class="week-phase">${week.phase}</div>
+    </div>
+    <div class="day-progress-row">
+      <div class="bar-track"><div class="bar-fill" style="width:${dp}%"></div></div>
+      <div class="day-pct-label">${dp}%</div>
+    </div>
+    <div class="week-quote">${week.quote}</div>
+  `;
+
+  week.categories.forEach((cat, ci) => {
+    const doneTasks = cat.tasks.filter((_, ti) => state[getKey(currentWeek, currentDay, ci, ti)]).length;
+    const catId = `cat_${ci}`;
+    html += `
+      <div class="category open" id="${catId}">
+        <div class="category-header" onclick="toggleCategory('${catId}')">
+          <div class="cat-icon">${cat.icon}</div>
+          <div class="cat-info">
+            <div class="cat-name">${cat.name}</div>
+            <div class="cat-count">${doneTasks} / ${cat.tasks.length} выполнено сегодня</div>
+          </div>
+          <div class="cat-toggle">⌄</div>
+        </div>
+        <div class="category-body">
+          ${cat.tasks.map((task, ti) => {
+            const done = state[getKey(currentWeek, currentDay, ci, ti)] ? 'done' : '';
+            return `<div class="task-item ${done}" onclick="toggleTask(${currentWeek},${currentDay},${ci},${ti})">
+              <div class="task-check"></div>
+              <div class="task-text">${task}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('weekView').innerHTML = html;
+
+  // Nav buttons
+  document.getElementById('prevBtn').disabled = currentWeek === 0 && currentDay === 0;
+  document.getElementById('nextBtn').disabled = currentWeek === 7 && currentDay === 6;
+}
+
+render();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+</body>
+</html>
